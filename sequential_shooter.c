@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <math.h> // pow()
+#include <assert.h>
 
 typedef struct {
   double x, y, z;
@@ -26,7 +27,7 @@ typedef struct {
 double calculateDisplacement();
 double getDistanceBetweenPoints(const PointClass*, const PointClass*);
 double getFiringAngle(double, PointClass*);
-double projectileTravelTime(double, double, double);
+double projectileTravelTime(PointClass*, double, double);
 
 void init_point(PointClass*, double, double, double);
 
@@ -34,18 +35,17 @@ int main(){
     PointClass cannon;
     PointClass target;
 
-    init_point(&cannon, 1, 0, 0);
-    init_point(&target, 650, 150, 0);
+    init_point(&cannon, 0, 0, 0);
+    init_point(&target, 0, 0, 90);
 
-    // double distance = getDistanceBetweenPoints(&cannon, &target);
-    // printf("The distance between these points is %f\n", distance);
+    double distance = getDistanceBetweenPoints(&cannon, &target);
+    printf("The distance between these points is %f\n", distance);
 
-
-    double projectileVelocity = 650.0; // Meters per second
+    double projectileVelocity = 165.0; // Meters per second
 
     double firingAngle = getFiringAngle(projectileVelocity, &target);
 
-    double projectileTime = projectileTravelTime(650, firingAngle, projectileVelocity);
+    double projectileTime = projectileTravelTime(&target, firingAngle, projectileVelocity);
 
     printf("Total projectile travel time: %f\n", projectileTime);
     // double px = calculateDisplacement();
@@ -87,7 +87,7 @@ double getDistanceBetweenPoints(const PointClass* a,const PointClass* b){
 // https://www.forrestthewoods.com/blog/solving_ballistic_trajectories/
 double getFiringAngle(double projectileVelocity, PointClass* target){
     // Gravity is not represented as negative here
-    double gravity = 400;
+    double gravity = 9.8;
     double x = target->x;
     double y = target->y;
 
@@ -113,22 +113,27 @@ double getFiringAngle(double projectileVelocity, PointClass* target){
     quadratic_plus = atan(quadratic_plus);
     quadratic_minus = atan(quadratic_minus);
 
-    printf("The values of the quadratic formula thetas are (+)%f and (-)%f \n", (quadratic_plus * 180) / M_PI, (quadratic_minus * 180) / M_PI);
+    printf("The values of the quadratic formula thetas are (+)%f degrees and (-)%f degrees\n", (quadratic_plus * 180) / M_PI, (quadratic_minus * 180) / M_PI);
+
+    // Check to make sure neither are Nan
+
+    assert(quadratic_plus == quadratic_plus);
+    assert(quadratic_minus == quadratic_minus);
 
     // Here we want to return the smaller angle value, it will be less of a lobbed path and have a quicker travel time
     if( ((quadratic_plus * 180) / M_PI ) < (quadratic_minus * 180) / M_PI){
         return quadratic_plus;
     }
 
-    
+
     return quadratic_minus;
 }
 
 
-double projectileTravelTime(double x, double angle, double projectileVelocity){
+double projectileTravelTime(PointClass* target, double angle, double projectileVelocity){
     // distance = rate * time
     // Total travel time -> Time = distance(x) / rate(cos(theta) * velocity)
-    return (x / (cos(angle) * projectileVelocity));
+    return (target->x / (cos(angle) * projectileVelocity));
 }
 
 void init_point(PointClass* point, double x, double y, double z){
