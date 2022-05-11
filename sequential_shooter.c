@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <math.h> // pow()
 #include <assert.h>
+#include <stdlib.h>
 
 typedef struct {
   double x, y, z;
@@ -26,8 +27,8 @@ typedef struct {
 
 double calculateDisplacement();
 double getDistanceBetweenPoints(const PointClass*, const PointClass*);
-double getFiringAngle(double, PointClass*);
-double projectileTravelTime(PointClass*, double, double);
+double getFiringAngle(double, double, PointClass*);
+double projectileTravelTime(double, double, double);
 
 void init_point(PointClass*, double, double, double);
 
@@ -36,29 +37,21 @@ int main(){
     PointClass target;
 
     init_point(&cannon, 0, 0, 0);
-    init_point(&target, 0, 0, 90);
+    init_point(&target, 0, 0, 2000);
 
     double distance = getDistanceBetweenPoints(&cannon, &target);
     printf("The distance between these points is %f\n", distance);
 
-    double projectileVelocity = 165.0; // Meters per second
+    double projectileVelocity = 200; // Meters per second
 
-    double firingAngle = getFiringAngle(projectileVelocity, &target);
+    double firingAngle = getFiringAngle(projectileVelocity, distance, &target);
 
-    double projectileTime = projectileTravelTime(&target, firingAngle, projectileVelocity);
+    printf("Firing angle is: %f degrees\n", (firingAngle * 180) / M_PI);
+    double projectileTime = projectileTravelTime(distance, firingAngle, projectileVelocity);
 
     printf("Total projectile travel time: %f\n", projectileTime);
-    // double px = calculateDisplacement();
-    // double py = calculateDisplacement();
-    // double pz = calculateDisplacement();
     return 0;
 }
-
-
-// The basis of this function is p = p + vt + (1/2)at^2
-// "This expression describes displacement (p) over time given initial position (p), velocity (v) and acceleration (a)."
-// This function will be called 3 times to get the p values of all 3 dimensions
-
 
 double calculateDisplacement(){
 
@@ -85,10 +78,10 @@ double getDistanceBetweenPoints(const PointClass* a,const PointClass* b){
 
 // Based on equation for calculating theta
 // https://www.forrestthewoods.com/blog/solving_ballistic_trajectories/
-double getFiringAngle(double projectileVelocity, PointClass* target){
+double getFiringAngle(double projectileVelocity, double targetDistance, PointClass* target){
     // Gravity is not represented as negative here
     double gravity = 9.8;
-    double x = target->x;
+    double x = targetDistance; // X or Z distance, doesn't matter. Only need 2d so we just take target distance
     double y = target->y;
 
     // Step one, handle the set up parenthesis under sqrt
@@ -101,7 +94,7 @@ double getFiringAngle(double projectileVelocity, PointClass* target){
     // printf("Value under the square root: %f\n", negative_check);
     if(negative_check <= 0.0){
         printf("Target is too far away, can't hit it\n");
-        return 0.0;
+        exit(0);
     }
 
     theta = sqrt(negative_check);
@@ -116,7 +109,6 @@ double getFiringAngle(double projectileVelocity, PointClass* target){
     printf("The values of the quadratic formula thetas are (+)%f degrees and (-)%f degrees\n", (quadratic_plus * 180) / M_PI, (quadratic_minus * 180) / M_PI);
 
     // Check to make sure neither are Nan
-
     assert(quadratic_plus == quadratic_plus);
     assert(quadratic_minus == quadratic_minus);
 
@@ -130,10 +122,10 @@ double getFiringAngle(double projectileVelocity, PointClass* target){
 }
 
 
-double projectileTravelTime(PointClass* target, double angle, double projectileVelocity){
+double projectileTravelTime(double distance, double angle, double projectileVelocity){
     // distance = rate * time
     // Total travel time -> Time = distance(x) / rate(cos(theta) * velocity)
-    return (target->x / (cos(angle) * projectileVelocity));
+    return (distance / (cos(angle) * projectileVelocity));
 }
 
 void init_point(PointClass* point, double x, double y, double z){
