@@ -1,9 +1,9 @@
-INCLUDE_DIRS = 
+INCLUDE_DIRS =
 LIB_DIRS = 
 CC=gcc
 #CC=icc
 
-CDEFS=
+CDEFS= 
 CFLAGS= -g -Wall $(INCLUDE_DIRS) $(CDEFS)
 LIBS= 
 
@@ -19,8 +19,8 @@ clean:
 	-rm -f *.o *.d
 	-rm -f sequential_shooter
 
-rotation: sequential_shooter.o
-	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o 
+sequential_shooter: sequential_shooter.o
+	gcc sequential_shooter.c -lm -o sequential_shooter
 
 depend:
 
