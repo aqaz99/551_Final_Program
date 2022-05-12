@@ -65,7 +65,8 @@ int main()
 	// 	printf("c[%d] = %d\n", i, c[i]);
 
 	// printf("c[%d] = %d\n", 1, c[1]); 
-	// printf("c[%d] = %d\n", SIZE-1, c[SIZE-1]);
+	
+	printf("Final variable in array: c[%d] = %d\n", SIZE-1, c[SIZE-1]);
 	cudaFree(a);
 	cudaFree(b);
 	cudaFree(c);

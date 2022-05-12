@@ -30,7 +30,7 @@ int main()
 	// for (int i = 0; i < 10; ++i)
 	// 	printf("c[%d] = %d\n", i, c[i]);
 
-    printf("c[%d] = %d\n", SIZE-1, c[SIZE-1]);
+    printf("Final variable in array: c[%d] = %d\n", SIZE-1, c[SIZE-1]);
 	free(a);
 	free(b);
 	free(c);
