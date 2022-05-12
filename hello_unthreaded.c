@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define SIZE	6553600000
+#define SIZE	655360000
 
 void VectorAdd(int *a, int *b, int *c, unsigned int n)
 {
