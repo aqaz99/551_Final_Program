@@ -37,12 +37,12 @@ int main(){
     PointClass target;
 
     init_point(&cannon, 0, 0, 0);
-    init_point(&target, 0, 0, 2000);
+    init_point(&target, 0, 0, 40.8);
 
     double distance = getDistanceBetweenPoints(&cannon, &target);
     printf("The distance between these points is %f\n", distance);
 
-    double projectileVelocity = 200; // Meters per second
+    double projectileVelocity = 20; // Meters per second
 
     double firingAngle = getFiringAngle(projectileVelocity, distance, &target);
 

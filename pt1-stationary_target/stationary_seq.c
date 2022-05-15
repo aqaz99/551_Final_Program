@@ -26,9 +26,14 @@ int main(int argc, char* argv[]){
     double initialProjectileHeight = 0;
 
     // Initial variables
-    double stepSize = 100000;
+    double stepSize = 1000000;
     double deltax = targetDistance/stepSize;
-    double errorToleranceToHit = 0.00001;
+    
+    // Within 10 micrometers on the x axis
+    double xToleranceToHit = 0.01;
+
+    // Within 10 centimeters on the y axis
+    double yToleranceToHit = 0.01;
     // printf("Delta x is %f\n", deltax);
 
     for(int angle=0; angle<90; angle++){
@@ -38,22 +43,30 @@ int main(int argc, char* argv[]){
         double angleInDegrees = angle *  (M_PI / 180.0);
 
 
-        // printf("tan of angle = %f\n", tan(angleInDegrees));
         while(1){
             double areaUnderSlice = f(x, initialProjectileHeight, angleInDegrees, projectileVelocity) * deltax;
             // If area under slice is negative, shot cannot reach
             if(areaUnderSlice < 0.0){
-                // printf("slice: %f, Target cannot be reached with angle %d\n",areaUnderSlice, angle);
                 break;
             }
-            projectileDistanceTraveled += areaUnderSlice;
 
-            if( (targetDistance - projectileDistanceTraveled) <= errorToleranceToHit){
-                printf("Under slice: %f\n", areaUnderSlice);
-                double travelTime = projectileTravelTime(targetDistance, angleInDegrees, projectileVelocity);
-                printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %d degrees.\n", projectileDistanceTraveled, travelTime, angle);
-                
+            // Total distance in x direction
+            projectileDistanceTraveled += areaUnderSlice;
+            double projectileElevation = f(projectileDistanceTraveled, initialProjectileHeight, angleInDegrees, projectileVelocity);
+
+            // Y value is negative, can't hit target
+            if(projectileElevation < 0.0){
                 break;
+            }
+
+            // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
+            if( (targetDistance - projectileDistanceTraveled) <= xToleranceToHit){
+                // We can check projectile elevation by plugging into f() function with our distance as the x value now
+                if( f(projectileDistanceTraveled, initialProjectileHeight, angleInDegrees, projectileVelocity) <= yToleranceToHit){
+                    double travelTime = projectileTravelTime(targetDistance, angleInDegrees, projectileVelocity);
+                    printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %d degrees.\n", projectileDistanceTraveled, travelTime, angle);
+                    break;
+                }
             }
 
             x += deltax;
