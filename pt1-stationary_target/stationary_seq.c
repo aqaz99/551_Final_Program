@@ -38,6 +38,8 @@ int main(int argc, char* argv[]){
     double yToleranceToHit = 0.005;
 
     double maxProjectileDistance = 0.0;
+    
+    double maxDistAngle;
 
 
     // Increase launch angle by a very small number as to cover many possible trajectories
@@ -73,8 +75,8 @@ int main(int argc, char* argv[]){
                 // We can check projectile elevation by plugging into f() function with our distance as the x value now
                 if( projectileElevation <= yToleranceToHit){
                     double travelTime = projectileTravelTime(targetDistance, angleInRadians, projectileVelocity);
-                    printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
-                    printf("Projectile elevation: %f\n",projectileElevation);
+                    printf("-- Hit Target! -- Projectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
+                    // printf("Projectile elevation: %f\n",projectileElevation);
                     break;
                 }
             }
@@ -82,11 +84,12 @@ int main(int argc, char* argv[]){
             x += deltax;
         }
         if(projectileDistanceTraveled > maxProjectileDistance){
+            maxDistAngle = angle;
             maxProjectileDistance = projectileDistanceTraveled;
         }
         // printf("Final distance for %f = %f\n", angle, projectileDistanceTraveled);
     }
-    printf("Max projectile distance with initial velocity of %f is %f\n", projectileVelocity, maxProjectileDistance);
+    printf("Max projectile distance for %f = %f\n", maxDistAngle, maxProjectileDistance);
     return 0;
 }
 

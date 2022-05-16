@@ -14,8 +14,8 @@
 #include <stdlib.h>
 
 #define SIZE	90.0
-#define THREADS 80.0 // This is total thread count, not threads per block
-#define BLOCKS  20.0 // Try and stick to even numbers
+#define THREADS 400.0 // This is total thread count, not threads per block
+#define BLOCKS  60.0 // Try and stick to even numbers
 
 // __global__ Lets compiler know we can run this function on GPU.
 __global__ void calculateFiringSolutionInAngleRange(double targetDistance, double projectileVelocity, double initialProjectileHeight){
@@ -23,7 +23,6 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
     // --- Establish work start and stop
     // Need to get work from where the last blocks last thread's work stops
 	double work_per_thread = SIZE/(THREADS*BLOCKS);
-	double threads_per_block = THREADS / BLOCKS;
 	// printf("work per thread %f\n", work_per_thread);
 
 	// Split up work
@@ -47,8 +46,6 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
 
     // Within .5 centimeters on the y axis
     double yToleranceToHit = 0.005;
-
-    double maxProjectileDistance = 0.0;
 
 
     // printf("Block %d) Thread %d - Work start: %f, work stop:%f\n", blockIdx.x, threadIdx.x, work_start, work_stop);
@@ -93,18 +90,17 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
                 if( projectileElevation <= yToleranceToHit){
                     double travelTime = (projectileDistanceTraveled / (cos(angleInRadians) * projectileVelocity));
 
-                    printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
-                    printf("Projectile elevation: %f\n",projectileElevation);
+                    printf("-- Hit Target! -- Projectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
+                    // printf("Projectile elevation: %f\n",projectileElevation);
                     break;
                 }
             }
 
             x += deltax;
         }
-        if(projectileDistanceTraveled > maxProjectileDistance){
-            maxProjectileDistance = projectileDistanceTraveled;
+        if(angle == 45.0){
+            printf("Max projectile distance for %f = %f\n", angle, projectileDistanceTraveled);
         }
-        // printf("Final distance for %f = %f\n", angle, projectileDistanceTraveled);
     }
     // printf("Max projectile distance with initial velocity of %f is %f\n", projectileVelocity, maxProjectileDistance);
 }
