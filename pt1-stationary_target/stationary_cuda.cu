@@ -9,7 +9,7 @@
 //              - Results of output can be checked here for validity: https://amesweb.info/Physics/Projectile-Motion-Calculator.aspx
 
 #include <stdio.h>
-#include <math.h> // pow()
+#include <math.h> // pow(), fabs()
 #include <assert.h>
 #include <stdlib.h>
 
@@ -47,13 +47,8 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
     // Within .5 centimeters on the y axis
     double yToleranceToHit = 0.005;
 
-
-    // printf("Block %d) Thread %d - Work start: %f, work stop:%f\n", blockIdx.x, threadIdx.x, work_start, work_stop);
-    
-
     // Increase launch angle by a very small number as to cover many possible trajectories
     for(double angle=work_start; angle<work_stop; angle += .005){
-        // printf("angle: %f\n", angle);
         // Variables for storing Riemann Sum values
         double x = 0;
         double projectileDistanceTraveled = 0;
@@ -78,14 +73,11 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
         
             // Y value is negative, can't hit target
             if(projectileElevation < 0.0){
-                // printf("crossed x axis at %f\n", projectileDistanceTraveled);
                 break;
             }
 
             // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
             if( fabs(targetDistance - projectileDistanceTraveled) <= xToleranceToHit){
-                // printf("Difference between %f and %f: %f\n",targetDistance, projectileDistanceTraveled, fabs(targetDistance - projectileDistanceTraveled));
-                // printf("Projectile elevation: %f\n",projectileElevation);
                 // We can check projectile elevation by plugging into f() function with our distance as the x value now
                 if( projectileElevation <= yToleranceToHit){
                     double travelTime = (projectileDistanceTraveled / (cos(angleInRadians) * projectileVelocity));
@@ -102,7 +94,6 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
             printf("Max projectile distance for %f = %f\n", angle, projectileDistanceTraveled);
         }
     }
-    // printf("Max projectile distance with initial velocity of %f is %f\n", projectileVelocity, maxProjectileDistance);
 }
 
 int main(int argc, char* argv[]){
@@ -115,12 +106,8 @@ int main(int argc, char* argv[]){
     double projectileVelocity = atof(argv[2]);
     double initialProjectileHeight = 0;
 
-    // cudaMallocManaged(&targetDistance, 2 * sizeof(double));
-	// cudaMallocManaged(&projectileVelocity, 2 * sizeof(double));
-	// cudaMallocManaged(&initialProjectileHeight, 2 * sizeof(double));
+    // Not using gpu memory, should I be? // cudaMallocManaged(&targetDistance, 2 * sizeof(double));
 
-
-    // calculateFiringSolutionInAngleRange(targetDistance, projectileVelocity, initialProjectileHeight);
     calculateFiringSolutionInAngleRange <<<BLOCKS, THREADS>>>(targetDistance, projectileVelocity, initialProjectileHeight);
 
     // Like join? Or barrier?
