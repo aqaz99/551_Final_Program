@@ -9,19 +9,22 @@ LIBS=
 
 HFILES= 
 CFILES= stationary_seq.c 
-CUFILES= 
+CUFILES= stationary_cuda.cu
 
 SRCS= ${HFILES} ${CFILES} ${CUFILES}
 OBJS= ${CFILES:.c=.o}
 
-all:	stationary_seq
+all:	stationary_seq stationary_cuda
 
 clean:
 	-rm -f *.o *.d
-	-rm -f stationary_seq
+	-rm -f stationary_seq stationary_cuda
 
 stationary_seq: stationary_seq.o
 	gcc stationary_seq.c -o stationary_seq -lm
+
+stationary_cuda: stationary_cuda.cu
+	nvcc stationary_cuda.cu -o stationary_cuda -lm
 
 depend:
 

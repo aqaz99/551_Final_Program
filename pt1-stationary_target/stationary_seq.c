@@ -50,6 +50,7 @@ int main(int argc, char* argv[]){
 
         while(1){
             double areaUnderSlice = f(x, initialProjectileHeight, angleInRadians, projectileVelocity) * deltax;
+            
             // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
             if(areaUnderSlice < 0.0 || x > targetDistance){
                 break;
