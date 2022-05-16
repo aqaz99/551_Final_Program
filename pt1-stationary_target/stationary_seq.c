@@ -6,6 +6,7 @@
 //              We will then find the function given our knowns and current angle and integrate it using Left Riemann Sum
 //               to find the total distance and see if that is equivalent to our target distance. 
 // Resources Used and Links:
+//              - Results of output can be checked here for validity: https://amesweb.info/Physics/Projectile-Motion-Calculator.aspx
 
 #include <stdio.h>
 #include <math.h> // pow()
@@ -26,53 +27,65 @@ int main(int argc, char* argv[]){
     double initialProjectileHeight = 0;
 
     // Initial variables
-    double stepSize = 1000000;
+    double stepSize = 100000;
     double deltax = targetDistance/stepSize;
     
+    // The dimensions below create an acceptable hit tolerance of a 4 inch x 4 inch square
     // Within 10 micrometers on the x axis
-    double xToleranceToHit = 0.01;
+    double xToleranceToHit = 0.005;
 
     // Within 10 centimeters on the y axis
-    double yToleranceToHit = 0.01;
-    // printf("Delta x is %f\n", deltax);
+    double yToleranceToHit = 0.005;
 
-    for(int angle=0; angle<90; angle++){
+    double maxProjectileDistance = 0.0;
+
+
+    // Increase launch angle by a very small number as to cover many possible trajectories
+    for(double angle=0; angle<90; angle += .005){
         // Variables for storing Riemann Sum values
         double x = 0;
         double projectileDistanceTraveled = 0;
-        double angleInDegrees = angle *  (M_PI / 180.0);
+        double angleInRadians = angle *  (M_PI / 180.0);
 
 
         while(1){
-            double areaUnderSlice = f(x, initialProjectileHeight, angleInDegrees, projectileVelocity) * deltax;
-            // If area under slice is negative, shot cannot reach
-            if(areaUnderSlice < 0.0){
+            double areaUnderSlice = f(x, initialProjectileHeight, angleInRadians, projectileVelocity) * deltax;
+            // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
+            if(areaUnderSlice < 0.0 || x > targetDistance){
                 break;
             }
 
             // Total distance in x direction
             projectileDistanceTraveled += areaUnderSlice;
-            double projectileElevation = f(projectileDistanceTraveled, initialProjectileHeight, angleInDegrees, projectileVelocity);
+            double projectileElevation = f(projectileDistanceTraveled, initialProjectileHeight, angleInRadians, projectileVelocity);
 
             // Y value is negative, can't hit target
             if(projectileElevation < 0.0){
+                // printf("crossed x axis at %f\n", projectileDistanceTraveled);
                 break;
             }
 
             // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
-            if( (targetDistance - projectileDistanceTraveled) <= xToleranceToHit){
+            if( fabs(targetDistance - projectileDistanceTraveled) <= xToleranceToHit){
+                // printf("Difference between %f and %f: %f\n",targetDistance, projectileDistanceTraveled, fabs(targetDistance - projectileDistanceTraveled));
+
                 // We can check projectile elevation by plugging into f() function with our distance as the x value now
-                if( f(projectileDistanceTraveled, initialProjectileHeight, angleInDegrees, projectileVelocity) <= yToleranceToHit){
-                    double travelTime = projectileTravelTime(targetDistance, angleInDegrees, projectileVelocity);
-                    printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %d degrees.\n", projectileDistanceTraveled, travelTime, angle);
+                if( projectileElevation <= yToleranceToHit){
+                    double travelTime = projectileTravelTime(targetDistance, angleInRadians, projectileVelocity);
+                    printf("-- Hit Target! --\nProjectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
+                    printf("Projectile elevation: %f\n",projectileElevation);
                     break;
                 }
             }
 
             x += deltax;
         }
+        if(projectileDistanceTraveled > maxProjectileDistance){
+            maxProjectileDistance = projectileDistanceTraveled;
+        }
+        // printf("Final distance for %f = %f\n", angle, projectileDistanceTraveled);
     }
-
+    printf("Max projectile distance with initial velocity of %f is %f\n", projectileVelocity, maxProjectileDistance);
     return 0;
 }
 
