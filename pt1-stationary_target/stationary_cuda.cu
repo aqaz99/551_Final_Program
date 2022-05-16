@@ -23,7 +23,6 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
     // --- Establish work start and stop
     // Need to get work from where the last blocks last thread's work stops
 	double work_per_thread = SIZE/(THREADS*BLOCKS);
-	// printf("work per thread %f\n", work_per_thread);
 
 	// Split up work
 	double work_start = work_per_thread * (THREADS * blockIdx.x + threadIdx.x);
@@ -90,6 +89,7 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
 
             x += deltax;
         }
+        // Most of the time, (all the time?) an angle of 45 degrees will produce the farthest possible shot
         if(angle == 45.0){
             printf("Max projectile distance for %f = %f\n", angle, projectileDistanceTraveled);
         }
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
 
     calculateFiringSolutionInAngleRange <<<BLOCKS, THREADS>>>(targetDistance, projectileVelocity, initialProjectileHeight);
 
-    // Like join? Or barrier?
+    // Like join from pthreads
 	cudaDeviceSynchronize();
     
     return 0;

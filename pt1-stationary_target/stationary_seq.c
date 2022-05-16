@@ -94,6 +94,7 @@ int main(int argc, char* argv[]){
 }
 
 
+// Equation taken from: https://www.omnicalculator.com/physics/trajectory-projectile-motion
 double f(double x, int initialHeight, double angleInDegrees, double projectileVelocity){
     double y;
     double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInDegrees) * cos(angleInDegrees));
