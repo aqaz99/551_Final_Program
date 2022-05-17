@@ -13,8 +13,9 @@ typedef struct {
 double predictedYValue(ProjectileClass* projectile, double x);
 void initProjectile(ProjectileClass* projectile, double x, double y, double initialVelocity, double initialHeight, double firingAngle);
 double distanceGivenTime(double time, double angle, double projectileVelocity);
-double projectileTravelTime(double distance, double angle, double projectileVelocity);
+double timeGivenDistance(double distance, double angle, double projectileVelocity);
 double calculateTotalDistance(ProjectileClass* projectile);
+void printEquation(double x, double initialHeight, double angleInRadians, double projectileVelocity);
 
 int main(int argc, char* argv[]){
 
@@ -31,51 +32,50 @@ int main(int argc, char* argv[]){
     // Print stats for target
     double total_distance_traveled = calculateTotalDistance(target);
     printf("Total distance traveled: %f\n", total_distance_traveled);
-    double total_travel_time = projectileTravelTime(total_distance_traveled, target->firingAngle, target->initialVelocity);
+    double total_travel_time = timeGivenDistance(total_distance_traveled, target->firingAngle, target->initialVelocity);
     printf("Total travel time: %f\n", total_travel_time);
 
 
 
     // Init interceptor with initial velocity of 45 and firing angle of 0
     ProjectileClass* interceptor = malloc(sizeof(ProjectileClass)); // Object I want to hit
-    initProjectile(interceptor, 0, 0, 205, 0, 0);
+    initProjectile(interceptor, 0, 0, 45, 0, 0);
 
-    // double time = 3.0;
-    // double distance = distanceGivenTime(time, target->firingAngle, target->initialVelocity);
 
-    // printf("Target distance at %f: %f\n", time, distance);
+    // Lets say we want to hit our target at (travel time)/2 
+    // 1. Find the x and y location of our target at that time
+    // 2. Find an angle that an interceptor could be fired at that passes through that (x, y)
+    // 3. Determine the time it would take for the interceptor to get to that location
+    // 4. If the interceptor can reach that location in time, display when the interceptor needs to fire to hit the target
 
-    // predictedYValue(target, distance);
-    // getPredictedTargetYValue(interceptor, x);
+    // 1. Get (x, y) at total time / 2 
+    printf("Attempting to hit target at %f\n", total_travel_time/2);
+    double targetX = distanceGivenTime(total_travel_time/2, target->firingAngle, target->initialVelocity);
+    double targetY = predictedYValue(target, targetX);
+    printf("Targets position at %f seconds is (%f, %f)\n",total_travel_time/2, targetX, targetY);
 
-    // Now we want to check at which firing angle we can intercept the projectile
-    // We will need time, x, and y to be equal.
-    for(double angle=0.0; angle<90; angle+=.001){ // For all firing angles
+    double intercTimeToTarget;
+    for(double angle=0.0; angle<90; angle+=.0001){ // For all firing angles
+        // Update our interceptors angle
         interceptor->firingAngle = angle;
-        // Compare target (x,y) with interceptor (x,y) at each time step, if they are equal we have a solution
-        for(double airTime=1.0; airTime < total_travel_time; airTime+= .01){
-            // Get X values of target and interceptor
-            double targetX = distanceGivenTime(airTime, target->firingAngle, target->initialVelocity);
-            double intercX = distanceGivenTime(airTime, interceptor->firingAngle, interceptor->initialVelocity);
 
-            // Get Y valus
-            double targetY = predictedYValue(target, targetX);
-            double intercY = predictedYValue(target, intercX);
+        // Get time to travel distance to intercept point so we can use it to verify x and y of collision
+        intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
+        double intercYvalAtTime = predictedYValue(interceptor, targetX);
+        double intercXvalAtTime = distanceGivenTime(intercTimeToTarget, interceptor->firingAngle, interceptor->initialVelocity);
 
-            double differenceX = fabs(targetX - intercX);
-            double differenceY = fabs(targetY - intercY);
+        double differenceY = fabs(targetY - intercYvalAtTime);
 
-            // printf("%f and %f\n", differenceX, differenceY);
-            if( (differenceX <= xToleranceToHit) && (differenceY <= yToleranceToHit)){
-                printf("-------Can hit target!------\n");
-                printf("Angle: %f\nTime Step: %f\n", angle, airTime);
-                printf("Target(x, y): (%f, %f)\nInterceptor(x, y): (%f, %f)\n",targetX, targetY, intercX, intercY);
-                printf("----------------------------\n");
-                break;
-            }
+        // printf("%f and %f\n", differenceX, differenceY);
+        if( (differenceY <= yToleranceToHit) ){
+            printf("-------Can hit target!------\n");
+            printf("- Angle: %f\n- Interceptor Launch Time: %f\n", angle, (total_travel_time/2) - intercTimeToTarget);
+            printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, intercXvalAtTime, intercYvalAtTime);
+            printEquation(targetX, 0, angle, interceptor->initialVelocity);
+            printf("----------------------------\n");
+            // break;
         }
     }
-
     return 0;
 }
 
@@ -91,7 +91,6 @@ double predictedYValue(ProjectileClass* projectile, double x){
     // y = h + x * tan(α) - g * x² / (2 * V₀² * cos²(α)) // 4.9 because gravity is divided by 2
     y = projectile->initialHeight + x * tan(angleInRadians) - (9.8 * x * x / underTheDivision);
 
-    // printf("Projectiles y value at x=%f is %f\n",x, y);
     return y;
 }
 
@@ -104,12 +103,13 @@ void initProjectile(ProjectileClass* projectile, double x, double y, double init
 }
 
 double distanceGivenTime(double time, double angle, double projectileVelocity){
+    double angleInRadians = angle *  (M_PI / 180.0);
     // distance = rate * time
     // Total distance traveled -> distance(x) = time * rate, where rate is cos(theta) * velocity
-    return (time * cos(angle) * projectileVelocity);
+    return (time * cos(angleInRadians) * projectileVelocity);
 }
 
-double projectileTravelTime(double distance, double angle, double projectileVelocity){
+double timeGivenDistance(double distance, double angle, double projectileVelocity){
     double angleInRadians = angle *  (M_PI / 180.0);
     // distance = rate * time
     // Total travel time -> Time = distance(x) / rate(cos(theta) * velocity)
@@ -127,4 +127,10 @@ double calculateTotalDistance(ProjectileClass* projectile){
     double Vy = projectile->initialVelocity * sin(angleInRadians);
     
     return (Vx * (Vy + sqrt(Vy * Vy + 2 * 9.8 * projectile->initialHeight)) / 9.8);
+}
+
+void printEquation(double x, double initialHeight, double angle, double projectileVelocity){
+    double angleInRadians = angle *  (M_PI / 180.0);
+    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
+    printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialHeight, tan(angleInRadians), underTheDivision);
 }

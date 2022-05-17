@@ -83,6 +83,8 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
 
                     printf("-- Hit Target! -- Projectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
                     // printf("Projectile elevation: %f\n",projectileElevation);
+                    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
+                    printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialProjectileHeight, tan(angleInRadians), underTheDivision);
                     break;
                 }
             }

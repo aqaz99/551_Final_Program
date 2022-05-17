@@ -13,7 +13,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-double f(double x, int initialHeight, double angleInDegrees, double projectileVelocity);
+double f(double x, double initialHeight, double angleInDegrees, double projectileVelocity);
+void printEquation(double x, double initialHeight, double angleInDegrees, double projectileVelocity);
 double projectileTravelTime(double distance, double angle, double projectileVelocity);
 
 int main(int argc, char* argv[]){
@@ -77,6 +78,7 @@ int main(int argc, char* argv[]){
                     double travelTime = projectileTravelTime(targetDistance, angleInRadians, projectileVelocity);
                     printf("-- Hit Target! -- Projectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
                     // printf("Projectile elevation: %f\n",projectileElevation);
+                    printEquation(projectileDistanceTraveled, initialProjectileHeight, angleInRadians, projectileVelocity);
                     break;
                 }
             }
@@ -95,15 +97,15 @@ int main(int argc, char* argv[]){
 
 
 // Equation taken from: https://www.omnicalculator.com/physics/trajectory-projectile-motion
-double f(double x, int initialHeight, double angleInDegrees, double projectileVelocity){
+double f(double x, double initialHeight, double angleInRadians, double projectileVelocity){
     double y;
-    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInDegrees) * cos(angleInDegrees));
+    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
 
     // I should remove these calculations outside of the function to save cycles
     // y = h + x * tan(α) - g * x² / (2 * V₀² * cos²(α)) // 4.9 because gravity is divided by 2
-    y = initialHeight + x * tan(angleInDegrees) - (9.8 * x * x / underTheDivision);
+    y = initialHeight + x * tan(angleInRadians) - (9.8 * x * x / underTheDivision);
 
-    // printf("x:%f y:%f\n",x, y);
+    // printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialHeight, tan(angleInRadians), underTheDivision);
     return y;
 }
 
@@ -111,4 +113,9 @@ double projectileTravelTime(double distance, double angle, double projectileVelo
     // distance = rate * time
     // Total travel time -> Time = distance(x) / rate(cos(theta) * velocity)
     return (distance / (cos(angle) * projectileVelocity));
+}
+
+void printEquation(double x, double initialHeight, double angleInRadians, double projectileVelocity){
+    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
+    printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialHeight, tan(angleInRadians), underTheDivision);
 }
