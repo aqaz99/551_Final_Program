@@ -18,18 +18,13 @@ double calculateTotalDistance(ProjectileClass* projectile);
 void printEquation(ProjectileClass* projectile);
 
 int main(int argc, char* argv[]){
-
-    // Within 10 micrometers on the x axis
-    double xToleranceToHit = 0.005;
-
     // Within 10 centimeters on the y axis
-    double yToleranceToHit = 0.005;
+    double yToleranceToHit = 0.0005;
 
     // Init moving target with initial velocity of 35 and firing angle of 45
     ProjectileClass* target = malloc(sizeof(ProjectileClass)); // Object I want to hit
     initProjectile(target, 0, 0, 35, 0, 45);
-    
-    printEquation(target);
+
     // Print stats for target
     double total_distance_traveled = calculateTotalDistance(target);
     printf("Total distance traveled: %f\n", total_distance_traveled);
@@ -55,51 +50,26 @@ int main(int argc, char* argv[]){
     double targetY = predictedYValue(target, targetX);
     printf("Targets position at %f seconds is (%f, %f)\n",total_travel_time/2, targetX, targetY);
 
-    // Initial Riemann sum variables
-    double stepSize = 10000;
-    double deltax = targetX/stepSize;
-
-    for(double angle=0.0; angle<90; angle+=.01){ // For all firing angles
-        // Set new interceptor angle
+    double intercTimeToTarget;
+    for(double angle=0.0; angle<90; angle+=.0001){ // For all firing angles, tiny incrememnt size because it's so fast
+        // Update our interceptors angle
         interceptor->firingAngle = angle;
-        // Variables for storing Riemann Sum values
-        double x = 0;
-        double projectileDistanceTraveled = 0;
-        while(1){
-            // Should this x be dist traveled?
-            double areaUnderSlice = predictedYValue(interceptor, x) * deltax;
-            
-            // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
-            if(areaUnderSlice < 0.0){
-                break;
-            }
 
-            // Total distance in x direction
-            projectileDistanceTraveled += areaUnderSlice;
-            double projectileElevation = predictedYValue(interceptor, projectileDistanceTraveled);
+        // Get time to travel distance to intercept point so we can use it to verify x and y of collision
+        intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
+        double intercYvalAtTime = predictedYValue(interceptor, targetX);
+        double intercXvalAtTime = distanceGivenTime(intercTimeToTarget, interceptor->firingAngle, interceptor->initialVelocity);
 
-            // Y value is negative, can't hit target
-            if(projectileElevation < 0.0){
-                break;
-            }
-            // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
-            if( fabs(targetX - projectileDistanceTraveled) <= xToleranceToHit){
-                // Get time it will take our projectile to hit the target
-                double intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
+        double differenceY = fabs(targetY - intercYvalAtTime);
 
-                // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
-                if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
-                    
-                    printf("-------Can hit target!------\n");
-                    printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", angle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
-                    printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);
-                    printEquation(interceptor);
-                    printf("----------------------------\n");
-                    angle+=.1; // Increment angle by a good chunk as to not get a giant list of firing solutions
-                    break;
-                }
-            }
-            x += deltax;
+        // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
+        if( (differenceY <= yToleranceToHit) && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
+            printf("-------Can hit target!------\n");
+            printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", angle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
+            printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, intercXvalAtTime, intercYvalAtTime);
+            printEquation(interceptor);
+            printf("----------------------------\n");
+            angle += .1; // Increment angle by a solid amount to skip redundant firing solutions
         }
     }
     return 0;
