@@ -7,6 +7,7 @@
 //               to find the total distance and see if that is equivalent to our target distance. 
 // Resources Used and Links:
 //              - Results of output can be checked here for validity: https://amesweb.info/Physics/Projectile-Motion-Calculator.aspx
+//              - Example on timing: https://forums.developer.nvidia.com/t/how-to-measure-total-time-for-cpu-and-gpu/28234
 
 #include <stdio.h>
 #include <math.h> // pow(), fabs()
@@ -47,7 +48,7 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
     double yToleranceToHit = 0.005;
 
     // Increase launch angle by a very small number as to cover many possible trajectories
-    for(double angle=work_start; angle<work_stop; angle += .005){
+    for(double angle=work_start; angle<work_stop; angle += .001){
         // Variables for storing Riemann Sum values
         double x = 0;
         double projectileDistanceTraveled = 0;
@@ -60,7 +61,7 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
 
             areaUnderSlice = areaUnderSlice * deltax;
             // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
-            if(areaUnderSlice < 0.0 || x > targetDistance){
+            if(areaUnderSlice < 0.0){
                 break;
             }
 
@@ -85,6 +86,7 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
                     // printf("Projectile elevation: %f\n",projectileElevation);
                     double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
                     printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialProjectileHeight, tan(angleInRadians), underTheDivision);
+                    angle += .1;
                     break;
                 }
             }
@@ -108,9 +110,29 @@ int main(int argc, char* argv[]){
     double projectileVelocity = atof(argv[2]);
     double initialProjectileHeight = 0;
 
-    // Not using gpu memory, should I be? // cudaMallocManaged(&targetDistance, 2 * sizeof(double));
+    
 
+    // Timing 
+    float elapsedTime=0;
+    cudaEvent_t start, finish;
+
+    // Init timer events
+    cudaEventCreate(&start);
+    cudaEventCreate(&finish);
+
+    // Start timing
+    cudaEventRecord(start, 0);
     calculateFiringSolutionInAngleRange <<<BLOCKS, THREADS>>>(targetDistance, projectileVelocity, initialProjectileHeight);
+
+    cudaEventRecord(finish, 0);
+    cudaEventSynchronize(finish);
+
+    cudaEventElapsedTime(&elapsedTime, start, finish);
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(finish);
+
+    printf("Total elapsed time in gpu was %.2f seconds\n", elapsedTime/1000);
 
     // Like join from pthreads
 	cudaDeviceSynchronize();

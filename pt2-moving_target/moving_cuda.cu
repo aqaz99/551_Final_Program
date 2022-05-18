@@ -151,8 +151,30 @@ int main(int argc, char* argv[]){
     int* foundSolution;
     foundSolution = 0;
     cudaMallocManaged(&foundSolution, sizeof(int));
+
+    // Timing 
+    float elapsedTime=0;
+    cudaEvent_t start, finish;
+
+    // Init timer events
+    cudaEventCreate(&start);
+    cudaEventCreate(&finish);
+
+    // Start timing
+    cudaEventRecord(start, 0);
+
     // Issue here is that I am executing code on the gpu, but calling functions on the cpu, need to remedy
     calculateFiringSolutionInAngleRange <<<BLOCKS, THREADS>>>(target, interceptorArray, total_travel_time, targetX, targetY, foundSolution);
+
+    cudaEventRecord(finish, 0);
+    cudaEventSynchronize(finish);
+
+    cudaEventElapsedTime(&elapsedTime, start, finish);
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(finish);
+
+    printf("Total elapsed time in gpu was %.2f seconds\n", elapsedTime/1000);
 
     // Like join from pthreads
 	cudaDeviceSynchronize();

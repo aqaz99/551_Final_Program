@@ -12,6 +12,7 @@
 #include <math.h> // pow()
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h> // Clocking speeds
 
 double f(double x, double initialHeight, double angleInDegrees, double projectileVelocity);
 void printEquation(double x, double initialHeight, double angleInDegrees, double projectileVelocity);
@@ -22,7 +23,7 @@ int main(int argc, char* argv[]){
         printf("Usage: ./stationary_seq target_distance initial_projectile_velocity\n");
         exit(1);
     }
-
+    
     double targetDistance = atof(argv[1]);
     double projectileVelocity = atof(argv[2]);
     double initialProjectileHeight = 0;
@@ -42,9 +43,13 @@ int main(int argc, char* argv[]){
     
     double maxDistAngle;
 
+    // Time sequention portion
+    struct timespec start, finish;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+    printf("Start: %f\n",(start.tv_nsec) / 100000000.0);
 
     // Increase launch angle by a very small number as to cover many possible trajectories
-    for(double angle=0; angle<90; angle += .005){
+    for(double angle=0; angle<90; angle += .001){
         // Variables for storing Riemann Sum values
         double x = 0;
         double projectileDistanceTraveled = 0;
@@ -55,7 +60,7 @@ int main(int argc, char* argv[]){
             double areaUnderSlice = f(x, initialProjectileHeight, angleInRadians, projectileVelocity) * deltax;
             
             // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
-            if(areaUnderSlice < 0.0 || x > targetDistance){
+            if(areaUnderSlice < 0.0){
                 break;
             }
 
@@ -79,6 +84,7 @@ int main(int argc, char* argv[]){
                     printf("-- Hit Target! -- Projectile traveled %f meters in %f seconds with angle %f degrees.\n", projectileDistanceTraveled, travelTime, angle);
                     // printf("Projectile elevation: %f\n",projectileElevation);
                     printEquation(projectileDistanceTraveled, initialProjectileHeight, angleInRadians, projectileVelocity);
+                    angle += .1;
                     break;
                 }
             }
@@ -92,6 +98,12 @@ int main(int argc, char* argv[]){
         // printf("Final distance for %f = %f\n", angle, projectileDistanceTraveled);
     }
     printf("Max projectile distance for %f = %f\n", maxDistAngle, maxProjectileDistance);
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
+    printf("Finish: %f\n",(finish.tv_nsec) / 100000000.0);
+
+    double elapsedTime = (finish.tv_nsec - start.tv_nsec) / 100000000.0;
+    printf("-- Total run time:  %f seconds --\n", elapsedTime);
     return 0;
 }
 

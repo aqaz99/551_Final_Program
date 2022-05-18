@@ -1,4 +1,5 @@
 // Example code taken from https://www.youtube.com/watch?v=2EbHSCvGFM0
+// Modified further with my own expirimentation
 
 #include <stdio.h>
 // #include <math.h>
@@ -48,16 +49,14 @@ int main()
 		c[i] = 0;
 	}
 	
-	// I should time this function
 
-	// Run the function VectorAdd with CUDA, using 1 thread block and THREADS/BLOCK threads per block
+	// Run the function VectorAdd with CUDA, using BLOCKS thread blocks and THREADS/BLOCK threads per block
 	VectorAdd <<<BLOCKS, THREADS/BLOCKS>>>(a, b, c, SIZE);
 
-	// printf("Before Barrier\n");
-	// Like join? Or barrier?
+	// Like join
 	cudaDeviceSynchronize();
 
-	// printf("After Barrier\n");
+	// printf("After Synch\n");
 
 	// for (int i = 0; i < SIZE; ++i)
 	// 	printf("c[%d] = %d\n", i, c[i]);

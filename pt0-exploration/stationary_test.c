@@ -20,6 +20,7 @@
 #include <math.h> // pow()
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h> // Clocking speeds
 
 typedef struct {
   double x, y, z;
@@ -34,7 +35,13 @@ void printEquation(double x, double initialHeight, double angleInDegrees, double
 
 void init_point(PointClass*, double, double, double);
 
+// In order to hit a stationary target, we need to know:
+// initial projectile speed
+// distance to target
+// Then we can determine firing angle(s), there should be two on short arc and one long rainbow arc
 int main(){
+    struct timespec start, finish;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     PointClass* cannon = malloc(sizeof(PointClass));
     PointClass* target = malloc(sizeof(PointClass));
 
@@ -61,6 +68,10 @@ int main(){
 
     printf("Shortest projectile travel time: %f\n", projectileTime);
     printEquation(distance, cannon->y, firingAngle, projectileVelocity);
+
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    double elapsedTime = (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    printf("-- Total run time:  %f seconds --\n", elapsedTime);
     return 0;
 }
 

@@ -58,6 +58,11 @@ int main(int argc, char* argv[]){
     double stepSize = 15000;
     double deltax = targetX/stepSize;
 
+    // Timing
+    struct timespec start, finish;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+
     // Stopper for once we find a solution, don't need to find more
     int foundSolution = 0;
     for(double angle=0.0; angle<90; angle+=.001){ // For all firing angles
@@ -108,5 +113,8 @@ int main(int argc, char* argv[]){
             x += deltax;
         }
     }
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    double elapsedTime = (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    printf("-- Total run time:  %f seconds --\n", elapsedTime);
     return 0;
 }

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h> // pow()
+#include <time.h> // Clocking speeds
 
 typedef struct {
   double initialVelocity, initialHeight, firingAngle;
