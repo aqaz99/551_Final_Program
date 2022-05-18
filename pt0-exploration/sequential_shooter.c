@@ -9,6 +9,7 @@
 // - 3D Distance formula example: https://www.engineeringtoolbox.com/distance-relationship-between-two-points-d_1854.html
 // - Projectile Motion Calculator: https://www.omnicalculator.com/physics/projectile-motion
 // - Trajectory Calculator: https://www.omnicalculator.com/physics/trajectory-projectile-motion
+// - SSS Triangle solving: https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
 
 // - Pretty good: https://stackoverflow.com/questions/2248876/2d-game-fire-at-a-moving-target-by-predicting-intersection-of-projectile-and-u
 
@@ -29,6 +30,7 @@ double calculateDisplacement();
 double getDistanceBetweenPoints(const PointClass*, const PointClass*);
 double getFiringAngle(double, double, PointClass*);
 double projectileTravelTime(double, double, double);
+double getRotation(const PointClass*, const PointClass*, double);
 
 void init_point(PointClass*, double, double, double);
 
@@ -37,17 +39,20 @@ int main(){
     PointClass target;
 
     init_point(&cannon, 0, 0, 0);
-    init_point(&target, 0, 0, 124.9999);
+    init_point(&target, 50, 0, 125);
 
     double distance = getDistanceBetweenPoints(&cannon, &target);
     printf("The distance between these points is %f\n", distance);
 
-    double projectileVelocity = 35; // Meters per second
+    double projectileVelocity = 55; // Meters per second
 
     double firingAngle = getFiringAngle(projectileVelocity, distance, &target);
 
     printf("Firing angle is: %f degrees\n", (firingAngle * 180) / M_PI);
     double projectileTime = projectileTravelTime(distance, firingAngle, projectileVelocity);
+
+    double cannonRotation = getRotation(&target, &cannon, distance);
+    printf("Theta/azimuth: %f degrees\n", cannonRotation);
 
     printf("Shortest projectile travel time: %f\n", projectileTime);
     return 0;
@@ -121,6 +126,19 @@ double getFiringAngle(double projectileVelocity, double targetDistance, PointCla
     return quadratic_minus;
 }
 
+// Use the law of cosines, or SSS to get necessary rotation or azimuth for cannon
+double getRotation(const PointClass* target, const PointClass* cannon, double distance){
+    // Execute Law of Cosines to solve a SSS triangle:
+    // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
+    // Formula is of form: Cos(A) = (b^2 + c^2 - a^2)/2bc
+    double sideC = target->x - cannon->x;
+    double sideB = distance;
+    double sideA = target->z - cannon->z;
+
+    double cosA = ((sideB * sideB) + (sideC * sideC) - (sideA * sideA))/(2 * sideB * sideC);
+    cosA = acos(cosA);
+    return (cosA * 180) / M_PI;
+}
 
 double projectileTravelTime(double distance, double angle, double projectileVelocity){
     // distance = rate * time
