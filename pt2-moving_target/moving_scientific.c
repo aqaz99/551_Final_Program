@@ -38,17 +38,16 @@ int main(int argc, char* argv[]){
     initProjectile(target, target_velocity, target_initial_height, target_firing_angle);
     printEquation(target);
 
-    // Print stats for target
-    double total_distance_traveled = calculateTotalDistance(target);
-    printf("Total distance traveled: %f\n", total_distance_traveled);
-    double total_travel_time = timeGivenDistance(total_distance_traveled, target->firingAngle, target->initialVelocity);
-    printf("Total travel time: %f\n", total_travel_time);
-
-
-
     // Init interceptor with initial velocity of user input and both initial height and angle to zero
     ProjectileClass* interceptor = malloc(sizeof(ProjectileClass)); // Object I want to hit
     initProjectile(interceptor, interceptor_velocity, 0, 0);
+
+
+    // Print stats for target
+    double total_distance_traveled = calculateTotalDistance(target);
+    printf("Target final x position: %f\n", total_distance_traveled);
+    double total_travel_time = timeGivenDistance(total_distance_traveled, target->firingAngle, target->initialVelocity);
+    printf("Total travel time: %f\n", total_travel_time);
 
 
     // Lets say we want to hit our target at (travel time)/2 

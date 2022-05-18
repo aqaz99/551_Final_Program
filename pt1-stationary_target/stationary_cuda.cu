@@ -35,7 +35,7 @@ __global__ void calculateFiringSolutionInAngleRange(double targetDistance, doubl
 		work_stop = work_per_thread * (THREADS * blockIdx.x + threadIdx.x + 1);
 	}
     // --- Establish work start and stop
-
+    
     // Initial variables
     double stepSize = 100000;
     double deltax = targetDistance/stepSize;
