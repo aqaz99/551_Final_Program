@@ -26,42 +26,44 @@ typedef struct {
 } PointClass;
 
 
-double calculateDisplacement();
 double getDistanceBetweenPoints(const PointClass*, const PointClass*);
 double getFiringAngle(double, double, PointClass*);
 double projectileTravelTime(double, double, double);
 double getRotation(const PointClass*, const PointClass*, double);
+void printEquation(double x, double initialHeight, double angleInDegrees, double projectileVelocity);
 
 void init_point(PointClass*, double, double, double);
 
 int main(){
-    PointClass cannon;
-    PointClass target;
+    PointClass* cannon = malloc(sizeof(PointClass));
+    PointClass* target = malloc(sizeof(PointClass));
 
-    init_point(&cannon, 0, 0, 0);
-    init_point(&target, 50, 0, 125);
+    init_point(cannon, 0, 0, 0);
+    init_point(target, 0, 0, 125);
 
-    double distance = getDistanceBetweenPoints(&cannon, &target);
+    double distance = getDistanceBetweenPoints(cannon, target);
     printf("The distance between these points is %f\n", distance);
 
-    double projectileVelocity = 55; // Meters per second
+    double projectileVelocity = 45; // Meters per second
 
-    double firingAngle = getFiringAngle(projectileVelocity, distance, &target);
+    double firingAngle = getFiringAngle(projectileVelocity, distance, target);
 
     printf("Firing angle is: %f degrees\n", (firingAngle * 180) / M_PI);
     double projectileTime = projectileTravelTime(distance, firingAngle, projectileVelocity);
 
-    double cannonRotation = getRotation(&target, &cannon, distance);
-    printf("Theta/azimuth: %f degrees\n", cannonRotation);
+    double cannonRotation = getRotation(target, cannon, distance);
+
+    if(cannonRotation == cannonRotation){ //Check for nan
+        printf("Theta/azimuth: %f degrees\n", cannonRotation);
+    }else{
+        printf("No rotation required\n");
+    }
 
     printf("Shortest projectile travel time: %f\n", projectileTime);
+    printEquation(distance, cannon->y, firingAngle, projectileVelocity);
     return 0;
 }
 
-double calculateDisplacement(){
-
-    return 0.0;
-}
 
 // Using the 3d distance formula d = ( (x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2 )^(1/2) 
 // Verified with online too https://www.engineeringtoolbox.com/distance-relationship-between-two-points-d_1854.html
@@ -150,4 +152,9 @@ void init_point(PointClass* point, double x, double y, double z){
     point->x = x;
     point->y = y;
     point->z = z;
+}
+
+void printEquation(double x, double initialHeight, double angleInRadians, double projectileVelocity){
+    double underTheDivision = (2 * projectileVelocity * projectileVelocity * cos(angleInRadians) * cos(angleInRadians));
+    printf("Function equation F(x) = %f + %fx - (9.8x^2) / %f\n",initialHeight, tan(angleInRadians), underTheDivision);
 }

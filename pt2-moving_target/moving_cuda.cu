@@ -98,8 +98,8 @@ __global__ void calculateFiringSolutionInAngleRange(ProjectileClass* target,
 
 int main(int argc, char* argv[]){
     // CL Arguments
-    if(argc < 5){
-        printf("Usage: ./moving_seq target_velocity target_initial_height target_firing_angle interceptor_velocity\n");
+    if(argc !=  5){
+        printf("Usage: ./moving_cuda TARGET_velocity TARGET_initial_height TARGET_firing_angle INTERCEPTOR_velocity\n");
         exit(1);
     }
 
