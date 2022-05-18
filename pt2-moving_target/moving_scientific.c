@@ -11,19 +11,32 @@ typedef struct {
 } ProjectileClass;
 
 double predictedYValue(ProjectileClass* projectile, double x);
-void initProjectile(ProjectileClass* projectile, double x, double y, double initialVelocity, double initialHeight, double firingAngle);
+void initProjectile(ProjectileClass* projectile, double initialVelocity, double initialHeight, double firingAngle);
 double distanceGivenTime(double time, double angle, double projectileVelocity);
 double timeGivenDistance(double distance, double angle, double projectileVelocity);
 double calculateTotalDistance(ProjectileClass* projectile);
 void printEquation(ProjectileClass* projectile);
 
 int main(int argc, char* argv[]){
+    // CL Arguments
+    if(argc < 5){
+        printf("Usage: ./moving_seq target_velocity target_initial_height target_firing_angle interceptor_velocity\n");
+        exit(1);
+    }
+
+    double target_velocity = atof(argv[1]);
+    double target_initial_height = atof(argv[2]);
+    double target_firing_angle = atof(argv[3]);
+    double interceptor_velocity = atof(argv[4]);
+
+    // Much smaller y tolerance to hit because we use math to get the exact angle
     // Within 10 centimeters on the y axis
     double yToleranceToHit = 0.0005;
 
     // Init moving target with initial velocity of 35 and firing angle of 45
     ProjectileClass* target = malloc(sizeof(ProjectileClass)); // Object I want to hit
-    initProjectile(target, 0, 0, 35, 0, 45);
+    initProjectile(target, target_velocity, target_initial_height, target_firing_angle);
+    printEquation(target);
 
     // Print stats for target
     double total_distance_traveled = calculateTotalDistance(target);
@@ -33,9 +46,9 @@ int main(int argc, char* argv[]){
 
 
 
-    // Init interceptor with initial velocity of 45 and firing angle of 0
+    // Init interceptor with initial velocity of user input and both initial height and angle to zero
     ProjectileClass* interceptor = malloc(sizeof(ProjectileClass)); // Object I want to hit
-    initProjectile(interceptor, 0, 0, 40, 0, 0);
+    initProjectile(interceptor, interceptor_velocity, 0, 0);
 
 
     // Lets say we want to hit our target at (travel time)/2 
@@ -90,9 +103,7 @@ double predictedYValue(ProjectileClass* projectile, double x){
     return y;
 }
 
-void initProjectile(ProjectileClass* projectile, double x, double y, double initialVelocity, double initialHeight, double firingAngle){
-    projectile->xPosition = x;
-    projectile->yPosition = y;
+void initProjectile(ProjectileClass* projectile, double initialVelocity, double initialHeight, double firingAngle){
     projectile->initialVelocity = initialVelocity;
     projectile->initialHeight = initialHeight;
     projectile->firingAngle = firingAngle;
