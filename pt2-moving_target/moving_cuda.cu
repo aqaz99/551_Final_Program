@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 #define SIZE	90.0
-#define THREADS 4.0 // This is total thread count, not threads per block
-#define BLOCKS  1.0 // Try and stick to even numbers
+#define THREADS 350.0 // This is total thread count, not threads per block
+#define BLOCKS  20.0 // Try and stick to even numbers
 
 typedef struct {
   double xPosition, yPosition, initialVelocity, initialHeight, firingAngle;
@@ -26,30 +26,16 @@ __host__ __device__ void printEquation(ProjectileClass* projectile);
 
 // __global__ means the function is called by CPU and suppose to be executed on GPU
 __global__ void calculateFiringSolutionInAngleRange(ProjectileClass* target, 
-                                                    ProjectileClass* interceptor, 
+                                                    ProjectileClass** interceptorArray, 
                                                     double total_travel_time,
                                                     double targetX,
-                                                    double targetY){
+                                                    double targetY,
+                                                    int* foundSolution){
 
-    // --- Establish work start and stop
-    // Need to get work from where the last blocks last thread's work stops
-	double work_per_thread = SIZE/(THREADS*BLOCKS);
 
-	// Split up work
-	double work_start = work_per_thread * (THREADS * blockIdx.x + threadIdx.x);
-	double work_stop;
-
-	// Last thread pick up remainder
-	if(threadIdx.x == (THREADS-1) && blockIdx.x == BLOCKS-1){
-		work_stop = SIZE;
-	}else{
-		work_stop = work_per_thread * (THREADS * blockIdx.x + threadIdx.x + 1);
-	}
-
-    int x;
-    x = threadIdx.x;
-    printf("%f\n", x);
-    // --- Establish work start and stop
+    // printf("thread[%d] computing from %f to %f\n", ((blockIdx.x * blockDim.x) + threadIdx.x), work_start, work_stop);
+    
+    ProjectileClass* myInterceptor = interceptorArray[((blockIdx.x * blockDim.x) + threadIdx.x)];
     // Within .05 meters or ~2 inches
     double xToleranceToHit = 0.05;
 
@@ -66,49 +52,48 @@ __global__ void calculateFiringSolutionInAngleRange(ProjectileClass* target,
     double stepSize = 15000;
     double deltax = targetX/stepSize;
 
-    for(double angle=work_start; angle<work_stop; angle+=.001){ // For all firing angles
-        // Set new interceptor angle
-        interceptor->firingAngle = angle;
-        // Variables for storing Riemann Sum values
-        double x = 0;
-        double projectileDistanceTraveled = 0;
-        while(1){
-            // Should this x be dist traveled?
-            double areaUnderSlice = predictedYValue(interceptor, x) * deltax;
-            
-            // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
-            if(areaUnderSlice < 0.0){
-                break;
-            }
-
-            // Total distance in x direction
-            projectileDistanceTraveled += areaUnderSlice;
-            double projectileElevation = predictedYValue(interceptor, projectileDistanceTraveled);
-
-            // Y value is negative, can't hit target
-            if(projectileElevation < 0.0){
-                break;
-            }
-            // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
-            if( fabs(targetX - projectileDistanceTraveled) <= xToleranceToHit){
-                // Get time it will take our projectile to hit the target
-                double intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
-
-                // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
-                if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
-                    
-                    // printf("-------Can hit target!------\n");
-                    printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", angle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
-                    // printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);
-                    // printEquation(interceptor);
-                    // printf("----------------------------\n");
-                    angle+=.1; // Increment angle by a good chunk as to not get a giant list of firing solutions
-                    break;
-                }
-            }
-            x += deltax;
+    // Variables for storing Riemann Sum values
+    double x = 0;
+    double projectileDistanceTraveled = 0;
+    while(*foundSolution != 1){
+        // Should this x be dist traveled?
+        double areaUnderSlice = predictedYValue(myInterceptor, x);
+        areaUnderSlice = areaUnderSlice * deltax;
+        // printf("area under slice: %f\n", areaUnderSlice);
+        // If area under slice is negative, shot cannot reach or if we haven't found solution by the distance of the target
+        if(areaUnderSlice < 0.0){
+            break;
         }
+
+        // Total distance in x direction
+        projectileDistanceTraveled += areaUnderSlice;
+        double projectileElevation = predictedYValue(myInterceptor, projectileDistanceTraveled);
+
+        // Y value is negative, can't hit target
+        if(projectileElevation < 0.0){
+            break;
+        }
+        // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
+            // printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);
+        if( fabs(targetX - projectileDistanceTraveled) <= xToleranceToHit){
+                
+            // Get time it will take our projectile to hit the target
+            double intercTimeToTarget = timeGivenDistance(targetX, myInterceptor->firingAngle, myInterceptor->initialVelocity);
+            // printf("%f - %f = %f , intercTimeToTarget: %f\n",projectileElevation, targetY, abs(projectileElevation - targetY), intercTimeToTarget);
+            // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
+            if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
+                *foundSolution = 1;
+                printf("-------Can hit target!------\n");
+                printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", myInterceptor->firingAngle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
+                printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);
+                printEquation(myInterceptor);
+                printf("----------------------------\n");
+                break;
+            }
+        }
+        x += deltax;
     }
+    // printf("Total distance for interceptor: %f\n",projectileDistanceTraveled);
 }
 
 int main(int argc, char* argv[]){
@@ -129,10 +114,21 @@ int main(int argc, char* argv[]){
     initProjectile(target, target_velocity, target_initial_height, target_firing_angle);
     printEquation(target);
 
-    // Init interceptor with initial velocity of user input and both initial height and angle to zero
-    ProjectileClass* interceptor;
-    cudaMallocManaged(&interceptor, SIZE * sizeof(ProjectileClass));
-    initProjectile(interceptor, interceptor_velocity, 0, 0);
+    // Need to allocate array of interceptors that start at angles 0.00 -> 90.00 in increments of SIZE/(THREADS*BLOCKS)
+    // You cannot allocate memory on the GPU after executing the function call so we do it on the cpu before the call
+    ProjectileClass** interceptorArray;
+    cudaMallocManaged(&interceptorArray, THREADS * BLOCKS * sizeof(ProjectileClass));
+    double work_per_thread = SIZE/(THREADS*BLOCKS);
+
+	// Split up work
+    for(int i=0; i<THREADS * BLOCKS; i++){
+        // Each thread gets their own interceptor
+        ProjectileClass* interceptor;
+        cudaMallocManaged(&interceptor, sizeof(ProjectileClass));
+	    double work_start = work_per_thread * i;
+        initProjectile(interceptor, interceptor_velocity, 0, work_start);
+        interceptorArray[i] = interceptor;
+    }
 
     //print info about target projectile
     double total_distance_traveled = calculateTotalDistance(target);
@@ -147,8 +143,12 @@ int main(int argc, char* argv[]){
     double targetY = predictedYValue(target, targetX);
     printf("Targets position at %f seconds is (%f, %f)\n",total_travel_time/2, targetX, targetY);
 
+    // Shared var between threads to quit once a solution is found
+    int* foundSolution;
+    foundSolution = 0;
+    cudaMallocManaged(&foundSolution, sizeof(int));
     // Issue here is that I am executing code on the gpu, but calling functions on the cpu, need to remedy
-    calculateFiringSolutionInAngleRange <<<2, 2>>>(target, interceptor, total_travel_time, targetX, targetY);
+    calculateFiringSolutionInAngleRange <<<BLOCKS, THREADS>>>(target, interceptorArray, total_travel_time, targetX, targetY, foundSolution);
 
     // Like join from pthreads
 	cudaDeviceSynchronize();
@@ -159,6 +159,7 @@ int main(int argc, char* argv[]){
 // Equation taken from: https://www.omnicalculator.com/physics/trajectory-projectile-motion
 __device__ double predictedYValue(ProjectileClass* projectile, double x){
     double angleInRadians = projectile->firingAngle *  (M_PI / 180.0);
+    // printf("x: %f tan(angleinrads): %f\n", x,tan(angleInRadians));
     double y;
     double underTheDivision = (2 * projectile->initialVelocity * projectile->initialVelocity * cos(angleInRadians) * cos(angleInRadians));
 
@@ -166,7 +167,7 @@ __device__ double predictedYValue(ProjectileClass* projectile, double x){
     
     // y = h + x * tan(α) - g * x² / (2 * V₀² * cos²(α)) // 4.9 because gravity is divided by 2
     y = projectile->initialHeight + x * tan(angleInRadians) - (9.8 * x * x / underTheDivision);
-
+    // printf("Y: %f\n", y);
     return y;
 }
 

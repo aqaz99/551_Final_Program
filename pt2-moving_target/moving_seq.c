@@ -67,13 +67,15 @@ int main(int argc, char* argv[]){
     double stepSize = 15000;
     double deltax = targetX/stepSize;
 
+    // Stopper for once we find a solution, don't need to find more
+    int foundSolution = 0;
     for(double angle=0.0; angle<90; angle+=.001){ // For all firing angles
         // Set new interceptor angle
         interceptor->firingAngle = angle;
         // Variables for storing Riemann Sum values
         double x = 0;
         double projectileDistanceTraveled = 0;
-        while(1){
+        while(foundSolution != 1){
             // Should this x be dist traveled?
             double areaUnderSlice = predictedYValue(interceptor, x) * deltax;
             
@@ -97,7 +99,7 @@ int main(int argc, char* argv[]){
 
                 // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
                 if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
-                    
+                    foundSolution = 1;
                     printf("-------Can hit target!------\n");
                     printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", angle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
                     printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);

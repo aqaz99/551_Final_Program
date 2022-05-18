@@ -25,7 +25,7 @@ __global__ void VectorAdd(unsigned int *a, unsigned  int *b, unsigned  int *c, u
 		work_stop = work_per_thread * (threads_per_block * blockIdx.x + threadIdx.x + 1);
 	}
 
-	// printf("Block [%d] thread[%d] computing from %d to %d\n", blockIdx.x, threadIdx.x, work_start, work_stop-1);
+	printf("Block [%d] thread[%d] computing from %d to %d\n", blockIdx.x, threadIdx.x, work_start, work_stop-1);
 
 	for(int i = work_start; i < work_stop; i++)
 		c[i] = a[i] + b[i];
