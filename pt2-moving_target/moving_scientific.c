@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     double interceptor_velocity = atof(argv[4]);
 
     // Much smaller y tolerance to hit because we use math to get the exact angle
-    // Within 10 centimeters on the y axis
+    // Within .05 centimeters on the y axis
     double yToleranceToHit = 0.0005;
 
     // Init moving target with initial velocity of 35 and firing angle of 45
@@ -59,16 +59,23 @@ int main(int argc, char* argv[]){
 
         // Get time to travel distance to intercept point so we can use it to verify x and y of collision
         intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
-        double intercYvalAtTime = predictedYValue(interceptor, targetX);
+        if(intercTimeToTarget > total_travel_time){ // Skip angles where projectile would travel too long to get there
+            continue;
+        }
+        // For this angle, get the interceptors y value when it passes through the target's x value
+        // y = h + x * tan(α) - g * x² / (2 * V₀² * cos²(α))
+        double intercYvalAtTargetX = predictedYValue(interceptor, targetX);
+
+        // How far will our incerteptor have traveled in the time it takes to reach the target.
+        // We do this because it may reach the target (x, y) coordinates, but at the wrong time
         double intercXvalAtTime = distanceGivenTime(intercTimeToTarget, interceptor->firingAngle, interceptor->initialVelocity);
 
-        double differenceY = fabs(targetY - intercYvalAtTime);
-
+        double differenceY = fabs(targetY - intercYvalAtTargetX);
         // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
         if( (differenceY <= yToleranceToHit) && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
             printf("-------Can hit target!------\n");
             printf("- Angle: %f\n- Time to Target: %f seconds\n- Launch after: %f seconds\n", angle, intercTimeToTarget, (total_travel_time/2) - intercTimeToTarget);
-            printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, intercXvalAtTime, intercYvalAtTime);
+            printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, intercXvalAtTime, intercYvalAtTargetX);
             printEquation(interceptor);
             printf("----------------------------\n");
             angle += .1; // Increment angle by a solid amount to skip redundant firing solutions

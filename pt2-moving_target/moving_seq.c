@@ -19,6 +19,7 @@ int main(int argc, char* argv[]){
     double target_firing_angle = atof(argv[3]);
     double interceptor_velocity = atof(argv[4]);
 
+    // Less accurate than scientific and CUDA because it takes so long
     // Within .05 meters or ~2 inches
     double xToleranceToHit = 0.05;
 
@@ -78,14 +79,19 @@ int main(int argc, char* argv[]){
             projectileDistanceTraveled += areaUnderSlice;
             double projectileElevation = predictedYValue(interceptor, projectileDistanceTraveled);
 
+            // Get time it will take our projectile to hit the target
+            double intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
+            if(intercTimeToTarget > total_travel_time){ // Skip angles where projectile would travel too long to get there
+                break;
+            }
+
             // Y value is negative, can't hit target
             if(projectileElevation < 0.0){
                 break;
             }
             // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
             if( fabs(targetX - projectileDistanceTraveled) <= xToleranceToHit){
-                // Get time it will take our projectile to hit the target
-                double intercTimeToTarget = timeGivenDistance(targetX, interceptor->firingAngle, interceptor->initialVelocity);
+
 
                 // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
                 if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){

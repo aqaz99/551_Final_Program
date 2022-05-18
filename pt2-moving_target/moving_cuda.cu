@@ -69,6 +69,12 @@ __global__ void calculateFiringSolutionInAngleRange(ProjectileClass* target,
         projectileDistanceTraveled += areaUnderSlice;
         double projectileElevation = predictedYValue(myInterceptor, projectileDistanceTraveled);
 
+        // Get time it will take our projectile to hit the target
+        double intercTimeToTarget = timeGivenDistance(targetX, myInterceptor->firingAngle, myInterceptor->initialVelocity);
+        if(intercTimeToTarget > total_travel_time){ // Skip angles where projectile would travel too long to get there
+            break;
+        }
+
         // Y value is negative, can't hit target
         if(projectileElevation < 0.0){
             break;
@@ -76,9 +82,7 @@ __global__ void calculateFiringSolutionInAngleRange(ProjectileClass* target,
         // Candidate for hit, distance travelled by shot is almost equal to distance to target, now we need to check elevation
             // printf("- Target(x, y): (%f, %f)\n- Interceptor(x, y): (%f, %f)\n- ",targetX, targetY, projectileDistanceTraveled, projectileElevation);
         if( fabs(targetX - projectileDistanceTraveled) <= xToleranceToHit){
-                
-            // Get time it will take our projectile to hit the target
-            double intercTimeToTarget = timeGivenDistance(targetX, myInterceptor->firingAngle, myInterceptor->initialVelocity);
+
             // printf("%f - %f = %f , intercTimeToTarget: %f\n",projectileElevation, targetY, abs(projectileElevation - targetY), intercTimeToTarget);
             // Check to see if both y's are the same and if the time to target is positive, meaning the shot is possible. neg values are solutions but not in time
             if( fabs(projectileElevation - targetY) <= yToleranceToHit && ((total_travel_time/2) - intercTimeToTarget) > 0.0){
