@@ -1,5 +1,0 @@
-Function equation F(x) = 0.000000 + 1.000000x - (9.8x^2) / 1225.000000
-Target final x position: 125.000000
-Total travel time: 5.050763
-Attempting to hit target at 2.525381
-Targets position at 2.525381 seconds is (62.500000, 31.250000)
