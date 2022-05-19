@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 #define SIZE	90.0
-#define THREADS 350.0 // This is total thread count, not threads per block
-#define BLOCKS  20.0 // Try and stick to even numbers
+#define THREADS 100.0 // This is total thread count, not threads per block
+#define BLOCKS  50.0 // Try and stick to even numbers
 
 typedef struct {
   double xPosition, yPosition, initialVelocity, initialHeight, firingAngle;
