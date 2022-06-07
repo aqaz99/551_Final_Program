@@ -135,7 +135,10 @@ double getFiringAngle(double projectileVelocity, double targetDistance, PointCla
         return quadratic_plus;
     }
 
-
+    printf("--------------------\n");
+    printf("Non-optimal Equation:\n");
+    printEquation(targetDistance, 0, quadratic_plus, projectileVelocity);
+    printf("--------------------\n");
     return quadratic_minus;
 }
 
